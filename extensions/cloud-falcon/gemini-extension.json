@@ -1,0 +1,11 @@
+{
+  "name": "cloud-falcon-nav",
+  "version": "1.0.0",
+  "mcpServers": {
+    "cloud-falcon": {
+      "command": "node",
+      "args": ["/Users/mcooper/.gemini/extensions/cloud-falcon/cf-nav-server.js"]
+    }
+  },
+  "contextFileName": "CF_NAV_CONFIG.md"
+}

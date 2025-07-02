@@ -1,0 +1,16 @@
+{
+  "name": "cloud-falcon-nav-extension",
+  "version": "1.0.0",
+  "description": "Cloud Falcon nav-block integration for Gemini CLI",
+  "main": "cf-nav-server.js",
+  "scripts": {
+    "start": "node cf-nav-server.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^0.4.0",
+    "node-fetch": "^2.7.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
