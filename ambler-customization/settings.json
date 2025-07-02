@@ -1,0 +1,10 @@
+{
+  "selectedAuthType": "oauth-personal",
+  "theme": "Default",
+  "mcpServers": {
+    "cloud-falcon": {
+      "command": "/Users/mcooper/workspace/cloud-falcon-ambler/cf-bridge-mcp/stdio-bridge.sh"
+    }
+  },
+  "preferredEditor": "windsurf"
+}
