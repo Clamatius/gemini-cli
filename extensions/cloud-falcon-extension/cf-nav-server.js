@@ -1,31 +1,40 @@
 #!/usr/bin/env node
 
 /**
+ * @license
+ * Copyright 2025 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/**
  * Cloud Falcon Nav-Block Integration MCP Server
  * Detects nav-blocks and fetches memories from Cloud Falcon REST API
  */
 
-const { Server } = require('@modelcontextprotocol/sdk/server/index.js');
-const { StdioServerTransport } = require('@modelcontextprotocol/sdk/server/stdio.js');
-const { CallToolRequestSchema, ListToolsRequestSchema } = require('@modelcontextprotocol/sdk/types.js');
-const fs = require('fs').promises;
-const path = require('path');
-const os = require('os');
+import { Server } from '@modelcontextprotocol/sdk/server/index.js';
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import {
+  CallToolRequestSchema,
+  ListToolsRequestSchema,
+} from '@modelcontextprotocol/sdk/types.js';
+import { promises as fs } from 'fs';
+import path from 'path';
+import os from 'os';
 
 class CloudFalconNavServer {
   constructor() {
     this.server = new Server(
       { name: 'cloud-falcon-nav', version: '1.0.0' },
-      { capabilities: { tools: {} } }
+      { capabilities: { tools: {} } },
     );
-    
+
     this.cfApiKey = process.env.CF_API_KEY;
     this.cfEndpoint = process.env.CF_ENDPOINT || 'https://api.cloudfalcon.io';
     this.clientId = process.env.CF_CLIENT_ID || 'ambler-gemini';
     this.lastNavBlock = null;
     this.memoryCache = new Map();
     this.cacheTimeout = 5 * 60 * 1000; // 5 minutes
-    
+
     this.setupHandlers();
   }
 
@@ -34,17 +43,18 @@ class CloudFalconNavServer {
       tools: [
         {
           name: 'cf_nav_monitor',
-          description: 'Monitor for nav-blocks and inject Cloud Falcon memories',
+          description:
+            'Monitor for nav-blocks and inject Cloud Falcon memories',
           inputSchema: {
             type: 'object',
             properties: {
               content: {
                 type: 'string',
-                description: 'Message content to scan for nav-blocks'
-              }
+                description: 'Message content to scan for nav-blocks',
+              },
             },
-            required: ['content']
-          }
+            required: ['content'],
+          },
         },
         {
           name: 'cf_fetch_memories',
@@ -54,18 +64,18 @@ class CloudFalconNavServer {
             properties: {
               query: {
                 type: 'string',
-                description: 'Search query for Cloud Falcon'
+                description: 'Search query for Cloud Falcon',
               },
               maxResults: {
                 type: 'number',
                 description: 'Maximum number of results',
-                default: 3
-              }
+                default: 3,
+              },
             },
-            required: ['query']
-          }
-        }
-      ]
+            required: ['query'],
+          },
+        },
+      ],
     }));
 
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
@@ -75,7 +85,10 @@ class CloudFalconNavServer {
         case 'cf_nav_monitor':
           return await this.handleNavMonitor(args.content);
         case 'cf_fetch_memories':
-          return await this.handleFetchMemories(args.query, args.maxResults || 3);
+          return await this.handleFetchMemories(
+            args.query,
+            args.maxResults || 3,
+          );
         default:
           throw new Error(`Unknown tool: ${name}`);
       }
@@ -85,64 +98,63 @@ class CloudFalconNavServer {
   async handleNavMonitor(content) {
     try {
       const navMatch = content.match(/<nav>(.*?)<\/nav>/s);
-      
+
       if (!navMatch) {
         return {
           content: [
             {
               type: 'text',
-              text: 'No nav-block detected in content.'
-            }
-          ]
+              text: 'No nav-block detected in content.',
+            },
+          ],
         };
       }
 
       const navContent = navMatch[1].trim();
-      
+
       // Skip if same as last nav-block (avoid redundant fetches)
       if (navContent === this.lastNavBlock) {
         return {
           content: [
             {
               type: 'text',
-              text: 'Nav-block unchanged, using cached memories.'
-            }
-          ]
+              text: 'Nav-block unchanged, using cached memories.',
+            },
+          ],
         };
       }
 
       this.lastNavBlock = navContent;
       const memories = await this.fetchMemoriesFromCF(navContent);
-      
+
       if (memories && memories.length > 0) {
         await this.injectMemories(memories);
         return {
           content: [
             {
               type: 'text',
-              text: `✅ Injected ${memories.length} memories for nav-block: "${navContent}"`
-            }
-          ]
+              text: `✅ Injected ${memories.length} memories for nav-block: "${navContent}"`,
+            },
+          ],
         };
       } else {
         return {
           content: [
             {
               type: 'text',
-              text: `⚠️ No memories found for nav-block: "${navContent}"`
-            }
-          ]
+              text: `⚠️ No memories found for nav-block: "${navContent}"`,
+            },
+          ],
         };
       }
-
     } catch (error) {
       return {
         content: [
           {
             type: 'text',
-            text: `❌ Nav monitor error: ${error.message}`
-          }
-        ]
+            text: `❌ Nav monitor error: ${error.message}`,
+          },
+        ],
       };
     }
   }
@@ -150,25 +162,25 @@ class CloudFalconNavServer {
   async handleFetchMemories(query, maxResults) {
     try {
       const memories = await this.fetchMemoriesFromCF(query, maxResults);
-      
+
       if (memories && memories.length > 0) {
         await this.injectMemories(memories);
         return {
           content: [
             {
               type: 'text',
-              text: `✅ Fetched and injected ${memories.length} memories for query: "${query}"`
-            }
-          ]
+              text: `✅ Fetched and injected ${memories.length} memories for query: "${query}"`,
+            },
+          ],
         };
       } else {
         return {
           content: [
             {
               type: 'text',
-              text: `⚠️ No memories found for query: "${query}"`
-            }
-          ]
+              text: `⚠️ No memories found for query: "${query}"`,
+            },
+          ],
         };
       }
     } catch (error) {
@@ -176,9 +188,9 @@ class CloudFalconNavServer {
         content: [
           {
             type: 'text',
-            text: `❌ Fetch memories error: ${error.message}`
-          }
-        ]
+            text: `❌ Fetch memories error: ${error.message}`,
+          },
+        ],
       };
     }
   }
@@ -199,20 +211,22 @@ class CloudFalconNavServer {
       const response = await fetch(`${this.cfEndpoint}/search-librarian`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${this.cfApiKey}`,
-          'Content-Type': 'application/json'
+          Authorization: `Bearer ${this.cfApiKey}`,
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           client_id: this.clientId,
           query: query,
           lens_types: ['code', 'docs', 'conversations'],
           max_results: maxResults,
-          conversation_id: `gemini-${Date.now()}`
-        })
+          conversation_id: `gemini-${Date.now()}`,
+        }),
       });
 
       if (!response.ok) {
-        throw new Error(`CF API error: ${response.status} ${response.statusText}`);
+        throw new Error(
+          `CF API error: ${response.status} ${response.statusText}`,
+        );
       }
 
       const data = await response.json();
@@ -221,11 +235,10 @@ class CloudFalconNavServer {
       // Cache the results
       this.memoryCache.set(cacheKey, {
         data: memories,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       });
 
       return memories;
-
     } catch (error) {
       throw new Error(`Failed to fetch memories: ${error.message}`);
     }
@@ -235,15 +248,14 @@ class CloudFalconNavServer {
     try {
       const contextPath = path.join(os.tmpdir(), '.gemini-cf-memories.md');
       const formattedMemories = this.formatMemories(memories);
-      
+
       await fs.writeFile(contextPath, formattedMemories, 'utf8');
-      
+
       // Also write to workspace if available
       const workspacePath = path.join(process.cwd(), '.gemini-cf-memories.md');
       await fs.writeFile(workspacePath, formattedMemories, 'utf8').catch(() => {
         // Ignore errors if workspace write fails
       });
-
     } catch (error) {
       throw new Error(`Failed to inject memories: ${error.message}`);
     }
@@ -270,11 +282,6 @@ class CloudFalconNavServer {
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
   }
-}
-
-// Add fetch polyfill for Node.js
-if (!global.fetch) {
-  global.fetch = require('node-fetch');
 }
 
 // Start the server

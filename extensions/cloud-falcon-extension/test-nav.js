@@ -1,6 +1,12 @@
 #!/usr/bin/env node
 
 /**
+ * @license
+ * Copyright 2025 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/**
  * Test script for nav-block detection
  */
 
@@ -36,15 +42,16 @@ function testMemoryFormatting() {
       tags: ['typescript', 'async', 'patterns'],
       temperature: 'HOT',
       memory_area: 'code',
-      content: '# TypeScript Async Patterns\n\nAsync/await patterns for TypeScript...'
+      content:
+        '# TypeScript Async Patterns\n\nAsync/await patterns for TypeScript...',
     },
     {
       title: 'Gemini CLI Architecture',
       tags: ['gemini-cli', 'architecture'],
       temperature: 'WARM',
       memory_area: 'docs',
-      content: '# Gemini CLI Architecture\n\nThe CLI is built with...'
-    }
+      content: '# Gemini CLI Architecture\n\nThe CLI is built with...',
+    },
   ];
 
   const formatted = formatMemories(mockMemories);

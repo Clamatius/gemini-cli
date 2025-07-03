@@ -4,7 +4,9 @@
   "mcpServers": {
     "cloud-falcon": {
       "command": "node",
-      "args": ["/Users/mcooper/.gemini/extensions/cloud-falcon/cf-nav-server.js"]
+      "args": [
+        "/Users/mcooper/.gemini/extensions/cloud-falcon/cf-nav-server.js"
+      ]
     }
   },
   "contextFileName": "CF_NAV_CONFIG.md"
